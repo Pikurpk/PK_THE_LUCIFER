@@ -1,0 +1,2 @@
+theme=red
+username=yourname
