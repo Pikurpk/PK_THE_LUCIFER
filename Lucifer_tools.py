@@ -20,7 +20,7 @@ def banner():
 ███████╗╚██████╔╝╚██████╗██║██║     ███████╗██║  ██║
 ╚══════╝ ╚═════╝  ╚═════╝╚═╝╚═╝     ╚══════╝╚═╝  ╚═╝{RESET}
         {GREEN}Lucifer Termux Tools Pack{RESET}
-            Powered by Foysal
+            Developed by Foysal...
 """)
 
 # ----------------------------- #
@@ -143,6 +143,114 @@ def yt_info():
     os.system(f"yt-dlp --get-title --get-duration --get-description {url}")
 
 # ----------------------------- #
+# 13. Strong Password Generator
+# ----------------------------- #
+def strong_pass():
+    import random, string
+    length = int(input("\nPassword Length: "))
+    chars = string.ascii_letters + string.digits + "!@#$%^&*()_+="
+    password = "".join(random.choice(chars) for _ in range(length))
+    print(GREEN + f"\nGenerated Password: {password}\n" + RESET)
+
+# ----------------------------- #
+# 14. URL Shortener
+# ----------------------------- #
+def url_shortener():
+    long_url = input("\nEnter Long URL: ")
+    try:
+        api = f"http://tinyurl.com/api-create.php?url={long_url}"
+        short = requests.get(api).text
+        print(GREEN + f"\nShort URL: {short}\n" + RESET)
+    except:
+        print(RED + "\nFailed to shorten URL\n" + RESET)
+
+# ----------------------------- #
+# 15. Battery Status (Termux API)
+# ----------------------------- #
+def battery_status():
+    os.system("termux-battery-status")
+
+# ----------------------------- #
+# 16. Send SMS (Your Phone)
+# ----------------------------- #
+def sms_sender():
+    os.system("pkg install termux-api -y")
+    number = input("\nEnter number: ")
+    msg = input("Message: ")
+    os.system(f"termux-sms-send -n {number} '{msg}'")
+    print(GREEN + "\nSMS Sent!\n" + RESET)
+
+# ----------------------------- #
+# 17. Camera Snap
+# ----------------------------- #
+def camera_snap():
+    os.system("termux-camera-photo ~/photo.jpg")
+    print(GREEN + "\nSaved: ~/photo.jpg\n" + RESET)
+
+# ----------------------------- #
+# 18. Text to PDF
+# ----------------------------- #
+def text_to_pdf():
+    os.system("pip install fpdf -q")
+    from fpdf import FPDF
+    text = input("\nWrite text for PDF: ")
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    pdf.multi_cell(0, 10, text)
+    pdf.output("output.pdf")
+    print(GREEN + "\nPDF saved as output.pdf\n" + RESET)
+
+# ----------------------------- #
+# 19. Temp Mail
+# ----------------------------- #
+def temp_mail():
+    try:
+        domains = requests.get("https://api.mail.tm/domains").json()
+        dom = domains["hydra:member"][0]["domain"]
+        print(GREEN + f"\nTemp Mail Domain: @{dom}\n" + RESET)
+    except:
+        print(RED + "\nCould not fetch temporary email.\n" + RESET)
+
+# ----------------------------- #
+# 20. PDF to Text
+# ----------------------------- #
+def pdf_to_text():
+    os.system("pip install PyPDF2 -q")
+    from PyPDF2 import PdfReader
+    file = input("\nPDF File Path: ")
+    try:
+        pdf = PdfReader(file)
+        print("\nExtracted Text:\n")
+        for page in pdf.pages:
+            print(page.extract_text())
+    except:
+        print(RED + "\nError reading PDF!\n" + RESET)
+
+# ----------------------------- #
+# 21. Clipboard Tools
+# ----------------------------- #
+def clipboard_tools():
+    os.system("pkg install termux-api -y")
+    print("\n1. Copy to clipboard")
+    print("2. Read clipboard")
+    choice = input("\nChoose: ")
+    if choice == "1":
+        txt = input("Enter text: ")
+        os.system(f"termux-clipboard-set '{txt}'")
+    elif choice == "2":
+        os.system("termux-clipboard-get")
+
+# ----------------------------- #
+# 22. Random MAC Generator
+# ----------------------------- #
+def mac_gen():
+    import random
+    mac = [random.randint(0x00, 0xFF) for _ in range(6)]
+    mac_addr = ':'.join(f"{x:02x}" for x in mac)
+    print(GREEN + f"\nRandom MAC: {mac_addr}\n" + RESET)
+
+# ----------------------------- #
 # Main Menu
 # ----------------------------- #
 def menu():
@@ -165,6 +273,16 @@ def menu():
 10. Internet Speed Test
 11. Hash Generator
 12. YouTube Video Info
+13. Strong Password Generator
+14. URL Shortener
+15. Battery Status
+16. Send SMS
+17. Camera Capture
+18. Text → PDF
+19. Temp Mail Generator
+20. PDF → Text
+21. Clipboard Tools
+22. Random MAC Generator
 0. Exit
 """)
 
@@ -182,6 +300,16 @@ def menu():
         elif choice == "10": speed_test()
         elif choice == "11": hash_generate()
         elif choice == "12": yt_info()
+        elif choice == "13": strong_pass()
+        elif choice == "14": url_shortener()
+        elif choice == "15": battery_status()
+        elif choice == "16": sms_sender()
+        elif choice == "17": camera_snap()
+        elif choice == "18": text_to_pdf()
+        elif choice == "19": temp_mail()
+        elif choice == "20": pdf_to_text()
+        elif choice == "21": clipboard_tools()
+        elif choice == "22": mac_gen()
         elif choice == "0":
             clear()
             print("Goodbye Lucifer!")
